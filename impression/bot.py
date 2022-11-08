@@ -15,10 +15,24 @@ class Impression(commands.Bot):
 
         @commands.command(name="predict")
         async def predict(ctx: commands.context.Context, *args):
+            text = ' '.join(args)
+
+            embed = discord.Embed()
+            embed.color = 0xAF69EE
+            embed.title = "Top predictions"
+            embed.description = f'Top predictions for query `{text}`\nTrained from authors: {", ".join(f"`{author}`" for author in self.encoder.categories_[0])}'
+
             async with ctx.typing():
-                text = ' '.join(args)
                 preds = util.make_prediction(self.model, self.encoder, text)
-            await ctx.send('\n'.join([f'Predicted `{author}` with confidence `{confidence * 100:.2f}%`' for (author, confidence) in preds]))
+
+            preds = tuple(preds)
+            authors = '\n'.join([f'`{author}`' for (author, _) in preds])
+            confidences = '\n'.join(
+                [f'{confidence:.2f}%' for (_, confidence) in preds])
+
+            embed.add_field(name="Name", value=authors)
+            embed.add_field(name="Confidence", value=confidences)
+            await ctx.send(embed=embed)
 
         self.add_command(predict)
 
